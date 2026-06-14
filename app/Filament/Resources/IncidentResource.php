@@ -19,7 +19,13 @@ class IncidentResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
-   public static function form(Form $form): Form
+    // TAMBAHAN: Memastikan navigasi muncul untuk user yang memiliki akses view_any
+    public static function shouldRegisterNavigation(): bool
+    {
+        return auth()->user()->can('view_any_incident');
+    }
+
+    public static function form(Form $form): Form
     {
         return $form
             ->schema([
@@ -28,7 +34,7 @@ class IncidentResource extends Resource
                         Forms\Components\TextInput::make('kode_laporan')
                             ->required()
                             ->unique(ignoreRecord: true)
-                            ->default(fn () => 'INC-' . date('YmdHis')), // Auto generate kode
+                            ->default(fn () => 'INC-' . date('YmdHis')),
                         Forms\Components\DateTimePicker::make('tanggal_kejadian')
                             ->required()
                             ->default(now()),
@@ -90,56 +96,64 @@ class IncidentResource extends Resource
                                     ->required(),
                             ])
                             ->addActionLabel('Tambah Foto Bukti')
-                            ->grid(2) // Membuat tampilannya menyamping
+                            ->grid(2)
                     ])->columnSpanFull(),
             ])->columns(3);
-
     }
 
-    public static function table(Table $table): Table
-    {
-        return $table
-            ->columns([
-                Tables\Columns\TextColumn::make('kode_laporan')->searchable(),
-                Tables\Columns\TextColumn::make('tanggal_kejadian')->dateTime()->sortable(),
-                Tables\Columns\TextColumn::make('area.nama_area')->label('Area')->searchable(),
-                Tables\Columns\TextColumn::make('category.nama_kategori')->label('Kategori'),
-                Tables\Columns\TextColumn::make('tingkat_keparahan')
-                    ->badge()
-                    ->color(fn (string $state): string => match ($state) {
-                        'Rendah' => 'success',
-                        'Sedang' => 'warning',
-                        'Tinggi' => 'danger',
-                        'Kritis' => 'danger',
-                        default => 'gray',
-                    }),
-                Tables\Columns\TextColumn::make('status')
-                    ->badge()
-                    ->color(fn (string $state): string => match ($state) {
-                        'Baru' => 'gray',
-                        'Dalam Peninjauan' => 'warning',
-                        'Sedang Diperbaiki' => 'info',
-                        'Menunggu Validasi' => 'primary',
-                        'Selesai' => 'success',
-                        default => 'gray',
-                    }),
-            ])
-            ->filters([])
-            ->actions([
-                Tables\Actions\EditAction::make(),
-            ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                ]),
-            ])
-            ->defaultSort('created_at', 'desc');
-    }
+    
+   public static function table(Table $table): Table
+{
+    return $table
+        // Tambahkan blok ini tepat setelah $table
+        ->modifyQueryUsing(function (Builder $query) {
+            // Kita filter agar hanya menampilkan data milik user yang login
+            // KECUALI dia adalah super_admin
+            if (!auth()->user()->hasRole('super_admin')) {
+                $query->where('reporter_id', auth()->id());
+            }
+        })
+        ->columns([
+            Tables\Columns\TextColumn::make('kode_laporan')->searchable(),
+            Tables\Columns\TextColumn::make('tanggal_kejadian')->dateTime()->sortable(),
+            Tables\Columns\TextColumn::make('area.nama_area')->label('Area')->searchable(),
+            Tables\Columns\TextColumn::make('category.nama_kategori')->label('Kategori'),
+            Tables\Columns\TextColumn::make('tingkat_keparahan')
+                ->badge()
+                ->color(fn (string $state): string => match ($state) {
+                    'Rendah' => 'success',
+                    'Sedang' => 'warning',
+                    'Tinggi' => 'danger',
+                    'Kritis' => 'danger',
+                    default => 'gray',
+                }),
+            Tables\Columns\TextColumn::make('status')
+                ->badge()
+                ->color(fn (string $state): string => match ($state) {
+                    'Baru' => 'gray',
+                    'Dalam Peninjauan' => 'warning',
+                    'Sedang Diperbaiki' => 'info',
+                    'Menunggu Validasi' => 'primary',
+                    'Selesai' => 'success',
+                    default => 'gray',
+                }),
+        ])
+        ->filters([])
+        ->actions([
+            Tables\Actions\EditAction::make(),
+        ])
+        ->bulkActions([
+            Tables\Actions\BulkActionGroup::make([
+                Tables\Actions\DeleteBulkAction::make(),
+            ]),
+        ])
+        ->defaultSort('created_at', 'desc');
+}
 
     public static function getRelations(): array
     {
         return [
-           RelationManagers\CommentsRelationManager::class,
+            RelationManagers\CommentsRelationManager::class,
         ];
     }
 

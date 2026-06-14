@@ -29,6 +29,8 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login()
+            ->brandName('HSE Reporting')
+            ->brandLogo(fn () => view('components.custom-brand-logo')) 
             ->colors([
                 'primary' => Color::Amber,
             ])
