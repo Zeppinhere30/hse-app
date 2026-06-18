@@ -75,4 +75,15 @@ class AreaResource extends Resource
             'edit' => Pages\EditArea::route('/{record}/edit'),
         ];
     }
+    public static function getNavigationBadge(): ?string
+    {
+        // Menghitung jumlah total area yang terdaftar
+        return (string) static::getModel()::count();
+    }
+
+    public static function getNavigationBadgeColor(): string | array | null
+    {
+        // Memberikan warna 'primary' (biru/warna utama tema) jika ada data, atau 'gray' jika kosong
+        return static::getModel()::count() > 0 ? 'primary' : 'gray';
+    }
 }

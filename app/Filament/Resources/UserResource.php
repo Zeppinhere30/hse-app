@@ -49,6 +49,9 @@ class UserResource extends Resource
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\DeleteAction::make()
+                ->requiresConfirmation()
+                ->color('danger'),
             ]);
     }
     public static function getRelations(): array
@@ -65,5 +68,16 @@ class UserResource extends Resource
             'create' => Pages\CreateUser::route('/create'),
             'edit' => Pages\EditUser::route('/{record}/edit'),
         ];
+    }
+    public static function getNavigationBadge(): ?string
+    {
+        // Menghitung jumlah total user yang terdaftar
+        return (string) static::getModel()::count();
+    }
+
+    public static function getNavigationBadgeColor(): string | array | null
+    {
+        // Menggunakan warna 'info' (biasanya biru muda) agar terlihat berbeda dari menu lainnya
+        return static::getModel()::count() > 0 ? 'info' : 'gray';
     }
 }

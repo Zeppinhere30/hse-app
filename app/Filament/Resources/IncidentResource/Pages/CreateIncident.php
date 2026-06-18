@@ -10,11 +10,17 @@ class CreateIncident extends CreateRecord
 {
     protected static string $resource = IncidentResource::class;
 
-    // Tambahkan fungsi ini agar reporter_id otomatis terisi
+    // Fungsi bawaanmu: agar reporter_id otomatis terisi
     protected function mutateFormDataBeforeCreate(array $data): array
     {
         $data['reporter_id'] = auth()->id();
 
         return $data;
+    }
+
+    // Fungsi tambahan: agar kembali ke halaman tabel setelah klik Create
+    protected function getRedirectUrl(): string
+    {
+        return $this->getResource()::getUrl('index');
     }
 }

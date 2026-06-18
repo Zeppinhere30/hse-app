@@ -165,4 +165,16 @@ class IncidentResource extends Resource
             'edit' => Pages\EditIncident::route('/{record}/edit'),
         ];
     }
+
+   public static function getNavigationBadge(): ?string
+    {
+        // Ubah 'Peninjauan' menjadi 'Dalam Peninjauan' agar sesuai dengan database
+        return (string) static::getModel()::whereIn('status', ['Baru', 'Dalam Peninjauan'])->count();
+    }
+
+    public static function getNavigationBadgeColor(): string | array | null
+    {
+        // Pastikan di sini juga diubah menjadi 'Dalam Peninjauan'
+        return static::getModel()::whereIn('status', ['Baru', 'Dalam Peninjauan'])->count() > 0 ? 'danger' : 'gray';
+    }
 }

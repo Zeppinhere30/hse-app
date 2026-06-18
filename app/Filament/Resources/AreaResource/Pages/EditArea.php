@@ -16,4 +16,10 @@ class EditArea extends EditRecord
             Actions\DeleteAction::make(),
         ];
     }
+
+    // Tambahkan fungsi ini agar setelah Edit kembali ke tabel
+    protected function getRedirectUrl(): string
+    {
+        return $this->getResource()::getUrl('index');
+    }
 }

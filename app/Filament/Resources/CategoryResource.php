@@ -77,4 +77,15 @@ class CategoryResource extends Resource
             'edit' => Pages\EditCategory::route('/{record}/edit'),
         ];
     }
+    public static function getNavigationBadge(): ?string
+    {
+        // Menghitung jumlah total kategori yang ada
+        return (string) static::getModel()::count();
+    }
+
+    public static function getNavigationBadgeColor(): string | array | null
+    {
+        // Memberikan warna 'warning' jika ada data, atau 'gray' jika kosong
+        return static::getModel()::count() > 0 ? 'warning' : 'gray';
+    }
 }
