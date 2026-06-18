@@ -17,7 +17,7 @@ class IncidentResource extends Resource
 {
     protected static ?string $model = Incident::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-exclamation-triangle';
 
     // TAMBAHAN: Memastikan navigasi muncul untuk user yang memiliki akses view_any
     public static function shouldRegisterNavigation(): bool
