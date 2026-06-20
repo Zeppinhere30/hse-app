@@ -101,54 +101,53 @@ class IncidentResource extends Resource
             ])->columns(3);
     }
 
-    
-   public static function table(Table $table): Table
-{
-    return $table
-        // Tambahkan blok ini tepat setelah $table
-        ->modifyQueryUsing(function (Builder $query) {
+
+    public static function table(Table $table): Table
+    {
+        return $table
             // Kita filter agar hanya menampilkan data milik user yang login
             // KECUALI dia adalah super_admin
-            if (!auth()->user()->hasRole('super_admin')) {
-                $query->where('reporter_id', auth()->id());
-            }
-        })
-        ->columns([
-            Tables\Columns\TextColumn::make('kode_laporan')->searchable(),
-            Tables\Columns\TextColumn::make('tanggal_kejadian')->dateTime()->sortable(),
-            Tables\Columns\TextColumn::make('area.nama_area')->label('Area')->searchable(),
-            Tables\Columns\TextColumn::make('category.nama_kategori')->label('Kategori'),
-            Tables\Columns\TextColumn::make('tingkat_keparahan')
-                ->badge()
-                ->color(fn (string $state): string => match ($state) {
-                    'Rendah' => 'success',
-                    'Sedang' => 'warning',
-                    'Tinggi' => 'danger',
-                    'Kritis' => 'danger',
-                    default => 'gray',
-                }),
-            Tables\Columns\TextColumn::make('status')
-                ->badge()
-                ->color(fn (string $state): string => match ($state) {
-                    'Baru' => 'gray',
-                    'Dalam Peninjauan' => 'warning',
-                    'Sedang Diperbaiki' => 'info',
-                    'Menunggu Validasi' => 'primary',
-                    'Selesai' => 'success',
-                    default => 'gray',
-                }),
-        ])
-        ->filters([])
-        ->actions([
-            Tables\Actions\EditAction::make(),
-        ])
-        ->bulkActions([
-            Tables\Actions\BulkActionGroup::make([
-                Tables\Actions\DeleteBulkAction::make(),
-            ]),
-        ])
-        ->defaultSort('created_at', 'desc');
-}
+            ->modifyQueryUsing(function (Builder $query) {
+                if (!auth()->user()->hasRole('super_admin')) {
+                    $query->where('reporter_id', auth()->id());
+                }
+            })
+            ->columns([
+                Tables\Columns\TextColumn::make('kode_laporan')->searchable(),
+                Tables\Columns\TextColumn::make('tanggal_kejadian')->dateTime()->sortable(),
+                Tables\Columns\TextColumn::make('area.nama_area')->label('Area')->searchable(),
+                Tables\Columns\TextColumn::make('category.nama_kategori')->label('Kategori'),
+                Tables\Columns\TextColumn::make('tingkat_keparahan')
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'Rendah' => 'success',
+                        'Sedang' => 'warning',
+                        'Tinggi' => 'danger',
+                        'Kritis' => 'danger',
+                        default => 'gray',
+                    }),
+                Tables\Columns\TextColumn::make('status')
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'Baru' => 'gray',
+                        'Dalam Peninjauan' => 'warning',
+                        'Sedang Diperbaiki' => 'info',
+                        'Menunggu Validasi' => 'primary',
+                        'Selesai' => 'success',
+                        default => 'gray',
+                    }),
+            ])
+            ->filters([])
+            ->actions([
+                Tables\Actions\EditAction::make(),
+            ])
+            ->bulkActions([
+                Tables\Actions\BulkActionGroup::make([
+                    Tables\Actions\DeleteBulkAction::make(),
+                ]),
+            ])
+            ->defaultSort('created_at', 'desc');
+    }
 
     public static function getRelations(): array
     {
@@ -166,15 +165,29 @@ class IncidentResource extends Resource
         ];
     }
 
-   public static function getNavigationBadge(): ?string
+    public static function getNavigationBadge(): ?string
     {
-        // Ubah 'Peninjauan' menjadi 'Dalam Peninjauan' agar sesuai dengan database
-        return (string) static::getModel()::whereIn('status', ['Baru', 'Dalam Peninjauan'])->count();
+        return (string) static::getOpenIncidentsCount();
     }
 
     public static function getNavigationBadgeColor(): string | array | null
     {
-        // Pastikan di sini juga diubah menjadi 'Dalam Peninjauan'
-        return static::getModel()::whereIn('status', ['Baru', 'Dalam Peninjauan'])->count() > 0 ? 'danger' : 'gray';
+        return static::getOpenIncidentsCount() > 0 ? 'danger' : 'gray';
+    }
+
+    /**
+     * Hitung jumlah incident berstatus "Baru" / "Dalam Peninjauan",
+     * di-scope sesuai user yang login — sama persis seperti filter
+     * yang dipakai di table() agar badge dan list konsisten.
+     */
+    protected static function getOpenIncidentsCount(): int
+    {
+        $query = static::getModel()::whereIn('status', ['Baru', 'Dalam Peninjauan']);
+
+        if (!auth()->user()->hasRole('super_admin')) {
+            $query->where('reporter_id', auth()->id());
+        }
+
+        return $query->count();
     }
 }
